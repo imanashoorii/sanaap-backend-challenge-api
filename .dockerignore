@@ -10,7 +10,9 @@ setup.cfg
 .idea
 .mypy_cache
 docker-compose.yml
+docker-compose.dev.yml
 docker-compose.prod.yml
+docker-compose.local.yml
 Dockerfile
 nginx
 venv

@@ -1,0 +1,83 @@
+volumes:
+  static_volume:
+    name: static_volume
+  db_data:
+    name: db_data
+  storage_data:
+    name: storage_data
+
+networks:
+  dms:
+    name: dms
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-local
+    hostname: api
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_volume:/usr/src/app/static
+    env_file:
+      - .env
+    environment:
+      DEBUG: "True"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - dms
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery-local
+    hostname: celery
+    command: celery -A core worker -l INFO
+    volumes:
+      - static_volume:/usr/src/app/static
+    env_file:
+      - .env
+    environment:
+      DEBUG: "True"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dms
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: postgres-local
+    hostname: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dms
+      TZ: Asia/Tehran
+    networks:
+      - dms
+
+  redis:
+    image: redis:8-alpine
+    container_name: redis-local
+    hostname: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - dms
