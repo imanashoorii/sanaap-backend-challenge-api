@@ -13,7 +13,14 @@ def custom_exception_handler(exc, context):
     Customize the format of error messages in DRF.
     """
     if isinstance(exc, Http404):
-        exc = NotFound()
+        return Response(
+            {
+                "success": False,
+                "code": ErrorCodes.NOT_FOUND,
+                "detail": UserMessages.NOT_FOUND,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     response = exception_handler(exc, context)
 
